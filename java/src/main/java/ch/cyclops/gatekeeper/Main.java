@@ -27,6 +27,7 @@ import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.log4j.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -39,7 +40,7 @@ public class Main {
         Logger.getRootLogger().getLoggerRepository().resetConfiguration();
         ConsoleAppender console = new ConsoleAppender(); //create appender
         //configure the appender
-        String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+        String PATTERN = "%d [%p|%C{1}|%M|%L] %m%n";
         console.setLayout(new PatternLayout(PATTERN));
         String logConsoleLevel = config.getProperty("log.level.console").toString();
         switch (logConsoleLevel) {
@@ -129,6 +130,43 @@ public class Main {
                 mainLogger.info("Authentication attempt was successful.");
             else
                 mainLogger.warn("Authentication attempt failed!");
+
+            String sName = "myservice-"+System.currentTimeMillis();
+            HashMap<String, String> newService = gkDriver.registerService(sName, "this is my new cool service", 0);
+            String sKey = "";
+            if(newService != null)
+            {
+                mainLogger.info("Service registration was successful! Got:" + newService.get("uri") + ", Key=" + newService.get("key"));
+                sKey = newService.get("key");
+            }
+            else
+            {
+                mainLogger.warn("Service registration failed!");
+            }
+
+            int newUserId = gkDriver.registerUser("user-"+System.currentTimeMillis(), "pass1234", false, sName, 0);
+            if(newUserId != -1)
+                mainLogger.info("User registration was successful. Received new id: " + newUserId);
+            else mainLogger.warn("User registration failed!");
+
+            String token = gkDriver.generateToken(newUserId, "pass1234");
+            boolean isValidToken = gkDriver.validateToken(token, newUserId);
+
+            if(isValidToken) mainLogger.info("The token: " + token + " is successfully validated for user-id: " + newUserId);
+            else mainLogger.warn("Token validation was unsuccessful! Token: " + token + ", user-id: " + newUserId);
+
+            ArrayList<String> sList = gkDriver.getServiceList(0); //the argument is the starting count of number of allowed
+                                                                    //internal attempts.
+            if(sList != null)
+            {
+                mainLogger.info("Received service list from Gatekeeper! Count: " + sList.size());
+                for(int i=0; i<sList.size(); i++)
+                    mainLogger.info(sList.get(i));
+            }
+
+            isValidToken = gkDriver.validateToken(token, sKey);
+            if(isValidToken) mainLogger.info("The token: " + token + " is successfully validated for user-id: " + newUserId + " against s-key:" + sKey);
+            else mainLogger.warn("Token validation was unsuccessful! Token: " + token + ", user-id: " + newUserId + ", s-key: " + sKey);
         }
     }
 }
