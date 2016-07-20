@@ -199,7 +199,7 @@ public class GKDriver
      * @param password  the account password associated with this user
      * @param isAdmin   true if user is an admin-user, else false
      * @param accessList    comma separated list of resources/services this user has access to, use ALL to grant access to everything
-     * @param attemptCount  intiger value controlling the self execution iterations, should be a value between 0 and 4
+     * @param attemptCount  integer value controlling the self execution iterations, should be a value between 0 and 4
      * @return  the user-id as integer if registration is successful, -1 if the process fails.
      * @throws Exception
      */
@@ -247,6 +247,43 @@ public class GKDriver
                 return this.registerUser(username, password, isAdmin, accessList, attemptCount); //call the function again now that token has been set
         }
         return -1;
+    }
+
+    /**
+     * This method allows an admin user to delete an user identified by user-id
+     * <p>
+     * @param userId        the user's id whose account is to be deleted from Gatekeeper
+     * @param attemptCount  integer value controlling the self execution iterations, should be a value between 0 and 4
+     * @return  true if the account was successfully deleted, else false
+     * @throws Exception
+     */
+    public boolean deleteUser(int userId, int attemptCount) throws Exception
+    {
+        OkHttpClient client = new OkHttpClient();
+        attemptCount++;
+
+        //this is an admin only call
+        //try first with the available token, if fails then generate a new token
+        if (adminToken.length() > 0)
+        {
+            Request request = new Request.Builder().url(gatekeeperUri + ":" + gatekeeperPort + "/admin/user/" + userId).
+                    header("User-Agent", "OkHttp Headers.java").addHeader("X-Auth-Token", adminToken).delete().build();
+
+            Response response = client.newCall(request).execute();
+
+            driverLogger.info("Delete User::Response code: " + response.code());
+
+            if (response.code() == 200) return true;
+        }
+        else
+        {
+            //generate a new token
+            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+            if(adminToken == null) adminToken = "";
+            if(attempCount < 5)
+                return this.deleteUser(userId, attemptCount); //call the function again now that token has been set
+        }
+        return false;
     }
 
     /**

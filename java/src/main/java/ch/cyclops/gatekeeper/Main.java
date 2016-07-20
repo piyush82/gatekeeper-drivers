@@ -167,6 +167,10 @@ public class Main {
             isValidToken = gkDriver.validateToken(token, sKey);
             if(isValidToken) mainLogger.info("The token: " + token + " is successfully validated for user-id: " + newUserId + " against s-key:" + sKey);
             else mainLogger.warn("Token validation was unsuccessful! Token: " + token + ", user-id: " + newUserId + ", s-key: " + sKey);
+
+            boolean deleteResult = gkDriver.deleteUser(newUserId, 0);
+            if(deleteResult) mainLogger.info("User with id: " + newUserId + " was deleted successfully.");
+            else mainLogger.warn("User with id: " + newUserId + " could not be deleted successfully!");
         }
     }
 }
