@@ -1,3 +1,6 @@
+This is an example Java program showing how to use the driver properly.
+
+
 ```
 /*
  * Copyright (c) 2016. Zuercher Hochschule fuer Angewandte Wissenschaften
