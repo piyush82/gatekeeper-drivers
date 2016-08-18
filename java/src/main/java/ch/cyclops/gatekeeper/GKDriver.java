@@ -26,6 +26,7 @@ import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.log4j.*;
+import org.apache.log4j.pattern.IntegerPatternConverter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -49,8 +50,10 @@ public class GKDriver
      * Constructor class, creates the object given the configuration file path.
      * <p>
      * @param confFile  Path to the driver configuration file
+     * @param uid   gatekeeper user-id
+     * @param pass  gatekeeper account password
      */
-    public GKDriver(String confFile)
+    public GKDriver(String confFile, int uid, String pass)
     {
         CompositeConfiguration config = new CompositeConfiguration();
         config.addConfiguration(new SystemConfiguration());
@@ -61,8 +64,8 @@ public class GKDriver
             driverLogger = Logger.getLogger("gatekeeper-driver.Driver");
             gatekeeperUri = config.getProperty("gatekeeper.uri").toString();
             gatekeeperPort = Integer.parseInt(config.getProperty("gatekeeper.port").toString());
-            adminUserId = config.getProperty("gatekeeper.admin.user.id").toString();
-            adminPassword = config.getProperty("gatekeeper.admin.password").toString();
+            adminUserId = Integer.toString(uid, 10);
+            adminPassword = pass;
             internalStatus = true;
             adminToken = "";
             driverLogger.info("gatekeeper driver initialized properly.");
@@ -104,11 +107,12 @@ public class GKDriver
                 ResponseBody rBody = response.body();
                 JSONObject jsonObj = new JSONObject(rBody.string());
                 JSONArray uArray = jsonObj.getJSONArray("userlist");
+                JSONArray uidArray = jsonObj.getJSONArray("userids");
                 driverLogger.info("Got user-list with : " + uArray.length() + " users.");
                 result = new ArrayList<String>(uArray.length());
                 for(int i=0; i<uArray.length(); i++)
                 {
-                    result.add(i, uArray.getString(i));
+                    result.add(i, uArray.getString(i) + "," + uidArray.getString(i));
                 }
             }
             else
@@ -116,10 +120,13 @@ public class GKDriver
                 //something wrong with the token.
                 driverLogger.warn("Error probably with the admin-token. Remaking this call automatically. Attempt - " + attemptCount);
                 this.adminToken = "";
-                if(attemptCount < 5)
+                if(attemptCount < 5) {
+                    response.body().close();
                     return this.getUserList(attemptCount);
+                }
                 else
                 {
+                    response.body().close();
                     driverLogger.error("Retry limit reached! Failing gracefully.");
                 }
             }
@@ -152,8 +159,12 @@ public class GKDriver
         Response response = client.newCall(request).execute();
 
         driverLogger.info("Authentication Check::Response code: " + response.code());
-        if(response.code() == 202) return true;
-
+        if(response.code() == 202)
+        {
+            response.body().close();
+            return true;
+        }
+        response.body().close();
         return false;
     }
 
@@ -183,11 +194,12 @@ public class GKDriver
             JSONObject jsonObj = new JSONObject(rBody.string());
             JSONObject temp = new JSONObject(jsonObj.get("token").toString());
             driverLogger.info("Received user-token: " + temp.get("id").toString());
-
+            response.body().close();
             return temp.get("id").toString();
         }
         else
         {
+            response.body().close();
             return null;
         }
     }
@@ -235,8 +247,10 @@ public class GKDriver
                 JSONArray uinfoArray = jsonObj.getJSONArray("info");
                 JSONObject temp = new JSONObject(uinfoArray.get(0).toString());
                 driverLogger.info("Got user-id: " + temp.get("id"));
+                response.body().close();
                 return Integer.parseInt(temp.get("id").toString());
             }
+            response.body().close();
         }
         else
         {
@@ -273,7 +287,12 @@ public class GKDriver
 
             driverLogger.info("Delete User::Response code: " + response.code());
 
-            if (response.code() == 200) return true;
+            if (response.code() == 200)
+            {
+                response.body().close();
+                return true;
+            }
+            response.body().close();
         }
         else
         {
@@ -304,8 +323,12 @@ public class GKDriver
         Response response = client.newCall(request).execute();
 
         driverLogger.info("Token Validation::Response code: " + response.code());
-        if(response.code() == 200) return true;
-
+        if(response.code() == 200)
+        {
+            response.body().close();
+            return true;
+        }
+        response.body().close();
         return false;
     }
 
@@ -328,8 +351,12 @@ public class GKDriver
         Response response = client.newCall(request).execute();
 
         driverLogger.info("Token Validation by service::Response code: " + response.code());
-        if(response.code() == 200) return true;
-
+        if(response.code() == 200)
+        {
+            response.body().close();
+            return true;
+        }
+        response.body().close();
         return false;
     }
 
@@ -371,11 +398,13 @@ public class GKDriver
                 {
                     result.add(i, sNameList.getString(i) + "," + sKeyList.getString(i));
                 }
+                response.body().close();
             }
             else
             {
                 //something wrong with the token.
                 driverLogger.warn("Error probably with the admin-token. Remaking this call automatically. Attempt - " + attemptCount);
+                response.body().close();
                 this.adminToken = "";
                 if(attemptCount < 5)
                     return this.getServiceList(attemptCount);
@@ -441,8 +470,10 @@ public class GKDriver
                 HashMap<String, String> result = new HashMap<String, String>();
                 result.put("uri", temp.getString("service-uri"));
                 result.put("key", temp.getString("service-key"));
+                response.body().close();
                 return result;
             }
+            response.body().close();
         }
         else
         {
