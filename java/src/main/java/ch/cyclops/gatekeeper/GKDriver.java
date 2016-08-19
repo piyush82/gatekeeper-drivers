@@ -365,7 +365,7 @@ public class GKDriver
      * contains service-short-name,service-key as its elements.
      * <p>
      * @param attemptCount integer value controlling the self execution iterations, should be a value between 0 and 4
-     * @return list of registered services as string ArrayList object, each element as name,key field, on error a null is returned.
+     * @return list of registered services as string ArrayList object, each element as name,key,id tuple, on error a null is returned.
      * @throws Exception
      */
     public ArrayList<String> getServiceList(int attemptCount) throws Exception
@@ -392,11 +392,12 @@ public class GKDriver
                 JSONObject sList = new JSONObject(jsonObj.get("servicelist").toString());
                 JSONArray sNameList = sList.getJSONArray("shortname");
                 JSONArray sKeyList = sList.getJSONArray("service-key");
+                JSONArray sIdList = sList.getJSONArray("id");
                 driverLogger.info("Got service-list with : " + sNameList.length() + " services.");
                 result = new ArrayList<String>(sNameList.length());
                 for(int i=0; i<sNameList.length(); i++)
                 {
-                    result.add(i, sNameList.getString(i) + "," + sKeyList.getString(i));
+                    result.add(i, sNameList.getString(i) + "," + sKeyList.getString(i) + "," + sIdList.getString(i));
                 }
                 response.body().close();
             }
