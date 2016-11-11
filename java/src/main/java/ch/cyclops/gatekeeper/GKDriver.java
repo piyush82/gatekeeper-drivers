@@ -306,6 +306,54 @@ public class GKDriver
     }
 
     /**
+     * This method allows an admin user to check if another user is admin or not
+     * <p>
+     * @param userId        the user's id whose account is to be checked as admin from Gatekeeper
+     * @param attemptCount  integer value controlling the self execution iterations, should be a value between 0 and 4
+     * @return  true if the account is an admin, else false
+     * @throws Exception
+     */
+    public boolean isAdmin(int userId, int attemptCount) throws Exception
+    {
+        OkHttpClient client = new OkHttpClient();
+        attemptCount++;
+
+        //this is an admin only call
+        //try first with the available token, if fails then generate a new token
+        if (adminToken.length() > 0)
+        {
+            Request request = new Request.Builder().url(gatekeeperUri + ":" + gatekeeperPort + "/admin/user/" + userId).
+                    header("User-Agent", "OkHttp Headers.java").addHeader("X-Auth-Token", adminToken).get().build();
+
+            Response response = client.newCall(request).execute();
+
+            driverLogger.info("Is Admin User::Response code: " + response.code());
+
+            if (response.code() == 200)
+            {
+                ResponseBody rBody = response.body();
+                JSONObject jsonObj = new JSONObject(rBody.string());
+                JSONArray uinfoArray = jsonObj.getJSONArray("info");
+                JSONObject temp = new JSONObject(uinfoArray.get(0).toString());
+                String is_admin = temp.get("isadmin").toString();
+                driverLogger.info("Got isAdmin flag: " + is_admin);
+                response.body().close();
+                return is_admin.equalsIgnoreCase("y");
+            }
+            response.body().close();
+        }
+        else
+        {
+            //generate a new token
+            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+            if(adminToken == null) adminToken = "";
+            if(attempCount < 5)
+                return this.deleteUser(userId, attemptCount); //call the function again now that token has been set
+        }
+        return false;
+    }
+
+    /**
      * This method allows validation of a token against an user-id, if token is valid and belongs to a claimed user the response is true, else false.
      * <p>
      * @param token     The token which needs to be validated
