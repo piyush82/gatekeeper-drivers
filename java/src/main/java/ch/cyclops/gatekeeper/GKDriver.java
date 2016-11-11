@@ -134,9 +134,12 @@ public class GKDriver
         else
         {
             //generate a new token
-            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
-            if(adminToken == null) adminToken = "";
-            return this.getUserList(attemptCount); //call the function again now that token has been set
+            if(attemptCount < 5) {
+                adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+                if (adminToken == null) adminToken = "";
+                driverLogger.warn("AttemptCount: " + attemptCount);
+                return this.getUserList(attemptCount); //call the function again now that token has been set
+            }
         }
         return result;
     }
@@ -255,10 +258,12 @@ public class GKDriver
         else
         {
             //generate a new token
-            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
-            if(adminToken == null) adminToken = "";
-            if(attempCount < 5)
-                return this.registerUser(username, password, isAdmin, accessList, attemptCount); //call the function again now that token has been set
+            if(attemptCount < 5) {
+                adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+                if (adminToken == null) adminToken = "";
+                if (attempCount < 5)
+                    return this.registerUser(username, password, isAdmin, accessList, attemptCount); //call the function again now that token has been set
+            }
         }
         return -1;
     }
@@ -297,10 +302,12 @@ public class GKDriver
         else
         {
             //generate a new token
-            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
-            if(adminToken == null) adminToken = "";
-            if(attempCount < 5)
-                return this.deleteUser(userId, attemptCount); //call the function again now that token has been set
+            if(attemptCount < 5) {
+                adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+                if (adminToken == null) adminToken = "";
+                if (attempCount < 5)
+                    return this.deleteUser(userId, attemptCount); //call the function again now that token has been set
+            }
         }
         return false;
     }
@@ -345,10 +352,12 @@ public class GKDriver
         else
         {
             //generate a new token
-            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
-            if(adminToken == null) adminToken = "";
-            if(attempCount < 5)
-                return this.deleteUser(userId, attemptCount); //call the function again now that token has been set
+            if(attemptCount < 5) {
+                adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+                if (adminToken == null) adminToken = "";
+                if (attempCount < 5)
+                    return this.isAdmin(userId, attemptCount); //call the function again now that token has been set
+            }
         }
         return false;
     }
@@ -527,10 +536,12 @@ public class GKDriver
         else
         {
             //generate a new token
-            adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
-            if(adminToken == null) adminToken = "";
-            if(attempCount < 5)
-                return this.registerService(shortName, description, attemptCount); //call the function again now that token has been set
+            if(attemptCount < 5) {
+                adminToken = generateToken(Integer.parseInt(adminUserId), adminPassword);
+                if (adminToken == null) adminToken = "";
+                if (attempCount < 5)
+                    return this.registerService(shortName, description, attemptCount); //call the function again now that token has been set
+            }
         }
         return null;
     }

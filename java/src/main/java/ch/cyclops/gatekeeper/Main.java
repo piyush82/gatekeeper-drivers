@@ -116,6 +116,7 @@ public class Main {
         if(args.length > 0)
         {
             GKDriver gkDriver = new GKDriver(args[args.length - 1], 1, "Eq7K8h9gpg");
+            System.out.println("testing if admin: " + gkDriver.isAdmin(1, 0));
             ArrayList<String> uList = gkDriver.getUserList(0); //the argument is the starting count of number of allowed
                                                                 //internal attempts.
             if(uList != null)
