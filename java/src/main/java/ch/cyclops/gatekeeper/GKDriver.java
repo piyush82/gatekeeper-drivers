@@ -25,6 +25,7 @@ import okhttp3.*;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.*;
 import org.apache.log4j.pattern.IntegerPatternConverter;
 import org.json.JSONArray;
@@ -408,6 +409,37 @@ public class GKDriver
         Response response = client.newCall(request).execute();
 
         driverLogger.info("Token Validation by service::Response code: " + response.code());
+        if(response.code() == 200)
+        {
+            response.body().close();
+            return true;
+        }
+        response.body().close();
+        return false;
+    }
+
+    /**
+     * This method allows the user to update their own password.
+     * <p>
+     * @param token     The token which needs to be validated
+     * @param userId    The userId of the account
+     * @return  true if the password was updated successfully, false otherwise
+     * @throws Exception
+     */
+    public boolean updatePassword(String userId, String password, String token) throws Exception
+    {
+        OkHttpClient client = new OkHttpClient();
+        JSONObject callBody = new JSONObject();
+        callBody.put("password", password);
+        driverLogger.info("update password call with json: " + callBody.toString());
+        RequestBody body = RequestBody.create(JSON, callBody.toString());
+
+        Request request = new Request.Builder().url(gatekeeperUri + ":" + gatekeeperPort + "/password/" + userId).
+                header("User-Agent", "OkHttp Headers.java").addHeader("X-Auth-Token", token).
+                put(body).build();
+        Response response = client.newCall(request).execute();
+
+        driverLogger.info("Password update service::Response code: " + response.code());
         if(response.code() == 200)
         {
             response.body().close();
